@@ -1,7 +1,7 @@
 # From the modelcontextprotocol.io server demonstration
 from typing import Any
 import httpx
-from mcp.server.fastmcp import fastmcp
+from mcp.server.fastmcp import FastMCP as fastmcp
 
 # Initialize fast server
 mcp = fastmcp("weather")
@@ -41,16 +41,16 @@ def format_alert(feature: dict) -> str:
 
 @mcp.tool()
 async def get_alerts(state: str) -> str:
-    """Get weather Alerts for a US state.
+    """Get weather alerts for a US state.
 
     Args:
-        state: Two letter us State code (e.g. CA, NY)
+        state: Two-letter US state code (e.g. CA, NY)
     """
     url = f"{NWS_API_BASE}/alerts/active/area/{state}"
-    data = await make_nws_request
+    data = await make_nws_request(url)
 
     if not data or "features" not in data:
-        return "Unable to fetch alerts or no alert found"
+        return "Unable to fetch alerts or no alerts found."
 
     if not data["features"]:
         return "No active alerts for this state."
@@ -73,21 +73,32 @@ async def get_forecast(latitude: float, longitude: float) -> str:
 
     if not points_data:
         return "Unable to fetch forecast data for this location."
+    
+    # Get the forecast url from the points response
+    forecast_url = points_data["properties"]["forecast"]
+    forecast_data = await make_nws_request(forecast_url)
+
+    if not forecast_data:
+        print("Unable to fetch detailed forecast.")
 
     # Format the periods into a readable forecast
     periods = forecast_data["properties"]["periods"]
     forecasts = []
-    for period in periods[:5]  # Only show next 5 periods
+    for period in periods[:5]:  # Only show next 5 periods
         forecast = f"""
         {period['name']}:\n
         Temperature: {period["temperature"]}°{period["temperatureUnit"]}\n
         Wind: {period["windSpeed"]} {period["windDirection"]}\n
         Forecast: {period["detailedForecast"]}
         """
-    forecasts.append(forecast)
+        forecasts.append(forecast)
     return "\n---\n".join(forecasts)
 
 
 if __name__ == "__main__":
     # Initialize and run the server
-    mcp.run(transport="stdio")
+    try:
+        mcp.run(transport="stdio")
+        print("Server shutting down", file=sys.stderr)
+    except KeyboardInterrupt:
+        print("Exiting..")
