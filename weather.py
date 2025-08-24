@@ -1,5 +1,4 @@
 # From the modelcontextprotocol.io server demonstration
-
 from typing import Any
 import httpx
 from mcp.server.fastmcp import fastmcp
@@ -10,6 +9,7 @@ mcp = fastmcp("weather")
 # Constants
 NWS_API_BASE = "https://api.weather.gov"
 USER_AGENT = "weather-app/1.0"
+
 
 async def make_nws_request(url: str) -> dict[str, Any] | None:
     """ Make a request to NWS API with proper error handling."""
@@ -25,6 +25,7 @@ async def make_nws_request(url: str) -> dict[str, Any] | None:
             return response.json()
         except Exception:
             return None
+
 
 def format_alert(feature: dict) -> str:
     """ Format an alert into a readable string."""
